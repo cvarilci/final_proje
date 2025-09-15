@@ -4,225 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tıbbi Masraf Tahmin Uygulaması</title>
-    
-    <!-- Modern bir font olan 'Poppins'i Google Fonts'tan dahil ediyoruz -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        /* --- Genel Stiller --- */
-        :root {
-            --primary-color: #3675D3; /* Ana Renk - Mavi */
-            --secondary-color: #F0F6FF; /* Arka Plan Rengi */
-            --success-color: #28a745; /* Başarı Rengi - Yeşil */
-            --text-color: #333;
-            --light-text-color: #666;
-            --border-color: #ddd;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif; /* Yeni fontumuzu uyguluyoruz */
-            background-color: var(--secondary-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1em;
-            box-sizing: border-box;
-        }
-
-        /* --- Ana Kutu Stilleri --- */
-        .container {
-            background: white;
-            padding: 2em 2.5em;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 550px;
-            border-top: 5px solid var(--primary-color); /* Üstte şık bir çizgi */
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 1.5em;
-        }
-        
-        /* Sağlık ikonu için SVG */
-        .header svg {
-            color: var(--primary-color);
-            width: 50px;
-            height: 50px;
-            margin-bottom: 0.5em;
-        }
-
-        h1 {
-            color: var(--text-color);
-            font-weight: 600;
-            font-size: 1.8em;
-            margin: 0;
-        }
-        
-        p.subtitle {
-            color: var(--light-text-color);
-            margin-top: 0.5em;
-        }
-
-        /* --- Form Elemanları Stilleri --- */
-        form {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Formu iki sütunlu yapıyoruz */
-            gap: 1.2em;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5em;
-        }
-        
-        /* Bazı elemanların tüm satırı kaplaması için */
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        
-        label {
-            font-weight: 500;
-            color: var(--text-color);
-            font-size: 0.9em;
-        }
-
-        input, select {
-            padding: 0.8em;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1em;
-            font-family: 'Poppins', sans-serif;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        /* Input'a tıklandığında (focus) daha belirgin hale getiriyoruz */
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(54, 117, 211, 0.2);
-        }
-
-        button {
-            background: linear-gradient(90deg, #3675D3, #619DFF); /* Düğmeye gradient ekliyoruz */
-            color: white;
-            padding: 1em;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 600;
-            font-family: 'Poppins', sans-serif;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.3s;
-            box-shadow: 0 4px 15px rgba(54, 117, 211, 0.3);
-            margin-top: 1em; /* Üstten biraz boşluk */
-        }
-
-        button:hover {
-            transform: translateY(-2px); /* Düğme üzerine gelince hafifçe yukarı kalksın */
-            box-shadow: 0 6px 20px rgba(54, 117, 211, 0.4);
-        }
-
-        /* --- Tahmin Sonucu Stilleri --- */
-        .prediction {
-            margin-top: 2em;
-            padding: 1.5em;
-            background-color: #F0FFF4; /* Açık yeşil arka plan */
-            border: 1px solid #C6F6D5;
-            border-left: 5px solid var(--success-color); /* Sol tarafta belirgin bir çizgi */
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .prediction .label {
-            font-size: 1.1em;
-            font-weight: 500;
-            color: var(--light-text-color);
-        }
-
-        .prediction .value {
-            font-size: 2.2em;
-            font-weight: 700;
-            color: var(--success-color);
-            display: block; /* Sayının alt satıra geçmesini sağlar */
-            margin-top: 0.2em;
-        }
+        body { font-family: sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 2em; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; flex-direction: column; gap: 1em; }
+        label { font-weight: bold; margin-bottom: -0.5em; }
+        input, select { padding: 0.8em; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        button { background-color: #007bff; color: white; padding: 1em; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .prediction { margin-top: 1.5em; text-align: center; font-size: 1.5em; font-weight: bold; color: #28a745; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <!-- Basit bir sağlık ikonu -->
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
-            <h1>Yıllık Tıbbi Masraf Tahmini</h1>
-            <p class="subtitle">Modelimiz ile potansiyel sağlık masraflarınızı öğrenin.</p>
-        </div>
-
+        <h1>Yıllık Tıbbi Masraf Tahmini</h1>
         <form action="/predict" method="post">
-            <div class="form-group">
-                <label for="age">Yaş:</label>
-                <input type="number" id="age" name="age" required min="18" max="100" placeholder="Örn: 35">
-            </div>
+            <label for="age">Yaş:</label>
+            <input type="number" id="age" name="age" required min="18" max="100">
 
-            <div class="form-group">
-                <label for="bmi">Vücut Kitle İndeksi (BMI):</label>
-                <input type="number" step="0.1" id="bmi" name="bmi" required min="10" max="60" placeholder="Örn: 24.5">
-            </div>
+            <label for="bmi">Vücut Kitle İndeksi (BMI):</label>
+            <input type="number" step="0.1" id="bmi" name="bmi" required min="10" max="60">
 
-            <div class="form-group">
-                <label for="children">Çocuk Sayısı:</label>
-                <input type="number" id="children" name="children" required min="0" max="10" placeholder="Örn: 2">
-            </div>
+            <label for="children">Çocuk Sayısı:</label>
+            <input type="number" id="children" name="children" required min="0" max="10">
 
-            <div class="form-group">
-                <label for="sex">Cinsiyet:</label>
-                <select id="sex" name="sex">
-                    <option value="male">Erkek</option>
-                    <option value="female">Kadın</option>
-                </select>
-            </div>
+            <label for="sex">Cinsiyet:</label>
+            <select id="sex" name="sex">
+                <option value="male">Erkek</option>
+                <option value="female">Kadın</option>
+            </select>
 
-            <div class="form-group">
-                <label for="smoker">Sigara Kullanımı:</label>
-                <select id="smoker" name="smoker">
-                    <option value="no">Hayır</option>
-                    <option value="yes">Evet</option>
-                </select>
-            </div>
+            <label for="smoker">Sigara Kullanımı:</label>
+            <select id="smoker" name="smoker">
+                <option value="yes">Evet</option>
+                <option value="no">Hayır</option>
+            </select>
 
-            <div class="form-group">
-                <label for="region">Bölge:</label>
-                <select id="region" name="region">
-                    <option value="southeast">Güneydoğu</option>
-                    <option value="southwest">Güneybatı</option>
-                    <option value="northeast">Kuzeydoğu</option>
-                    <option value="northwest">Kuzeybatı</option>
-                </select>
-            </div>
-            
-            <div class="form-group full-width">
-                <button type="submit">Tahmin Et</button>
-            </div>
+            <label for="region">Bölge:</label>
+            <select id="region" name="region">
+                <option value="southeast">Güneydoğu (Southeast)</option>
+                <option value="southwest">Güneybatı (Southwest)</option>
+                <option value="northeast">Kuzeydoğu (Northeast)</option>
+                <option value="northwest">Kuzeybatı (Northwest)</option>
+            </select>
+
+            <button type="submit">Tahmin Et</button>
         </form>
 
-        <!-- Tahmin sonucu bu bölümde gösterilecek (yeni stille) -->
+        <!-- Tahmin sonucu bu bölümde gösterilecek -->
         {% if prediction %}
         <div class="prediction">
-            <span class="label">Tahmini Yıllık Masraf</span>
-            <span class="value">$ {{ prediction }}</span>
+            Tahmini Yıllık Masraf: ${{ prediction }}
         </div>
         {% endif %}
     </div>
 </body>
 </html>
+
 
 
 
