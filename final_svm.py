@@ -12,18 +12,18 @@ df = pd.read_csv('insurance.csv')
 # 1. Veri setinin ilk 5 satırını görelim
 print("Veri Setinin İlk 5 Satırı:")
 print(df.head())
-print("\n" + "="*50 + "\n")
+print("\n" + "="*80 + "\n")
 
 # 2. Veri setinin yapısı hakkında bilgi alalım (sütun adları, veri tipleri, boş değerler)
 print("Veri Seti Bilgileri:")
 df.info()
-print("\n" + "="*50 + "\n")
+print("\n" + "="*80 + "\n")
 # Gördüğümüz gibi, veri setinde hiç boş (null) değer yok. Bu harika bir durum!
 
 # 3. Sayısal sütunlar için temel istatistikleri görelim (ortalama, standart sapma vb.)
 print("Sayısal Veri İstatistikleri:")
 print(df.describe())
-print("\n" + "="*50 + "\n")
+print("\n" + "="*80 + "\n")
 
 
 # --- Veriyi Görselleştirelim ---
@@ -69,4 +69,38 @@ plt.show()
 # Özellikle BMI'si yüksek olan sigara içicilerde masraflar çok daha fazla.
 # Genel Değerlendirme: Sigara içme durumu, tıbbi masraflar üzerinde en belirgin etkiye sahip özellik gibi görünüyor.
 # Yaş ve BMI de masraflarla pozitif korelasyona sahip, ancak sigara içme durumu kadar güçlü değil.
-# Bu görselleştirmeler, modelleme aşamasında hangi özelliklerin daha önemli olabileceği konusunda bize fikir veriyor.  
+# Bu görselleştirmeler, modelleme aşamasında hangi özelliklerin daha önemli olabileceği konusunda bize fikir veriyor.
+
+# --- Korelasyon Analizi İçin Veriyi Hazırlama ---
+
+# Korelasyon matrisi sadece sayısal değerlerle çalışır.
+# Bu yüzden kategorik sütunları (sex, smoker, region) sayısala çevireceğiz.
+# Bu işleme "One-Hot Encoding" denir ve bir sonraki adımda kalıcı olarak yapacağız.
+df_encoded = pd.get_dummies(df, columns=['sex', 'smoker', 'region'], drop_first=True)
+
+# get_dummies ne yaptı bir görelim:
+# - sex -> sex_male (1 ise erkek, 0 ise kadın)
+# - smoker -> smoker_yes (1 ise sigara içiyor, 0 ise içmiyor)
+# - region -> region_northwest, region_southeast, region_southwest (1 ise o bölgede, 0 ise değil)
+# 'drop_first=True' parametresi gereksiz bir sütun oluşmasını engeller. 
+# Örneğin sex_male=0 ise zaten kadın olduğunu anlarız, ikinci bir sütuna gerek kalmaz.
+
+print("Dönüştürülmüş Verinin İlk 5 Satırı:")
+print(df_encoded.head())
+print("\n" + "="*50 + "\n")
+
+# --- Korelasyon Matrisini Oluşturma ve Görselleştirme ---
+
+# Şimdi tüm veriler sayısal olduğu için korelasyon matrisini hesaplayabiliriz.
+correlation_matrix = df_encoded.corr()
+
+# Isı haritasını (heatmap) çizelim
+plt.figure(figsize=(12, 10))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=.5)
+# annot=True: Değerleri karelerin üzerine yazar.
+# cmap='coolwarm': Renk paletini belirler (pozitif için sıcak, negatif için soğuk renkler).
+# fmt='.2f': Değerleri virgülden sonra 2 basamakla formatlar.
+
+plt.title('Değişkenlerin Korelasyon Isı Haritası', fontsize=16)
+plt.show()
+
