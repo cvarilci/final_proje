@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tıbbi Masraf Tahmin Uygulaması</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 2em; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; flex-direction: column; gap: 1em; }
+        label { font-weight: bold; margin-bottom: -0.5em; }
+        input, select { padding: 0.8em; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        button { background-color: #007bff; color: white; padding: 1em; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .prediction { margin-top: 1.5em; text-align: center; font-size: 1.5em; font-weight: bold; color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Yıllık Tıbbi Masraf Tahmini</h1>
+        <form action="/predict" method="post">
+            <label for="age">Yaş:</label>
+            <input type="number" id="age" name="age" required min="18" max="100">
+
+            <label for="bmi">Vücut Kitle İndeksi (BMI):</label>
+            <input type="number" step="0.1" id="bmi" name="bmi" required min="10" max="60">
+
+            <label for="children">Çocuk Sayısı:</label>
+            <input type="number" id="children" name="children" required min="0" max="10">
+
+            <label for="sex">Cinsiyet:</label>
+            <select id="sex" name="sex">
+                <option value="male">Erkek</option>
+                <option value="female">Kadın</option>
+            </select>
+
+            <label for="smoker">Sigara Kullanımı:</label>
+            <select id="smoker" name="smoker">
+                <option value="yes">Evet</option>
+                <option value="no">Hayır</option>
+            </select>
+
+            <label for="region">Bölge:</label>
+            <select id="region" name="region">
+                <option value="southeast">Güneydoğu (Southeast)</option>
+                <option value="southwest">Güneybatı (Southwest)</option>
+                <option value="northeast">Kuzeydoğu (Northeast)</option>
+                <option value="northwest">Kuzeybatı (Northwest)</option>
+            </select>
+
+            <button type="submit">Tahmin Et</button>
+        </form>
+
+        <!-- Tahmin sonucu bu bölümde gösterilecek -->
+        {% if prediction %}
+        <div class="prediction">
+            Tahmini Yıllık Masraf: ${{ prediction }}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+

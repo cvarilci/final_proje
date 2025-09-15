@@ -104,105 +104,129 @@ sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidt
 plt.title('Değişkenlerin Korelasyon Isı Haritası', fontsize=16)
 plt.show()
 
-# Gerekli kütüphaneleri içeri aktaralım
-from sklearn.model_selection import train_test_split
+# --- 1. Gerekli Kütüphaneler ve Veri Hazırlığı (Önceki Adımlardan) ---
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score, mean_squared_error
 
-# Veri setini yükleyelim
+# Modeller
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+
+# Veriyi yükle, encode et, ayır
 df = pd.read_csv('insurance.csv')
-
-# --- 1. Kategorik Verileri Sayısala Çevirme (One-Hot Encoding) ---
-# Bu adımı en başta yapabiliriz çünkü sütunları ayırmadan önce
-# tüm kategorik verileri hazır hale getirmek daha kolaydır.
 df_encoded = pd.get_dummies(df, drop_first=True)
+X = df_encoded.drop('charges', axis=1)
+y = df_encoded['charges']
 
-# --- 2. Bağımsız (X) ve Bağımlı (y) Değişkenleri Ayırma ---
-X = df_encoded.drop('charges', axis=1) # charges dışındaki her şey
-y = df_encoded['charges']              # sadece charges
-
-# --- 3. Veriyi Eğitim ve Test Setlerine Ayırma ---
-# Verinin %80'i eğitim, %20'si test için ayrılacak.
-# random_state, her çalıştırmada aynı ayırmayı yaparak sonuçların tekrarlanabilir olmasını sağlar.
+# Eğitim ve test setlerine ayır
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-print(f"Eğitim seti boyutu: {X_train.shape}")
-print(f"Test seti boyutu: {X_test.shape}")
-print("\n" + "="*50 + "\n")
-
-# --- 4. Veriyi Ölçeklendirme (Scaling) ---
-
-# Ölçeklendirilecek sayısal sütunları belirleyelim. 
-# One-hot encoding ile oluşturulanlar (0 ve 1'lerden oluşanlar) zaten belirli bir ölçekte olduğu için
-# genelde ölçeklendirilmezler. Sadece orijinal sayısal sütunları ölçeklendirmek daha iyi bir pratiktir.
+# Veriyi ölçeklendir
 numerical_cols = ['age', 'bmi', 'children']
-
-# Scaler nesnesini oluştur
 scaler = StandardScaler()
-
-# Scaler'ı SADECE EĞİTİM VERİSİNE UYGULA ve öğrenmesini sağla (.fit_transform)
 X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
-
-# Öğrenilmiş olan bu scaler'ı SADECE TEST VERİSİNE UYGULA (.transform)
-# Burada yeniden .fit() KULLANILMAZ!
 X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])
 
+# Sonuçları saklamak için bir sözlük oluşturalım
+results = {}
 
-# Ölçeklendirme sonrası eğitim verisinin ilk birkaç satırına bakalım
-print("Ölçeklendirilmiş Eğitim Verisi (X_train):")
-print(X_train.head())
-
-# Gerekli kütüphaneleri ve veriyi bir önceki adımdan devam ettiriyoruz...
-
-# --- 3. Hiperparametre Optimizasyonu İçin Hazırlık ---
-from sklearn.model_selection import GridSearchCV
-
-# Denenecek parametreler için bir "grid" tanımlıyoruz.
-# Bu sadece bir başlangıç; daha fazla değer veya parametre ekleyebilirsiniz.
-param_grid = {
-    'C': [0.1, 1, 10, 100],
-    'gamma': ['scale', 'auto', 0.1, 0.01, 0.001],
-    'kernel': ['rbf', 'linear']
+# --- 2. Model 1: SVR (Destek Vektör Regresyonu) ---
+print("--- Model 1: SVR Tuning Başlıyor ---")
+# Bu sefer SADECE rbf kernel'i zorlayacağız.
+svr_params = {
+    'C': [1000, 5000, 10000],
+    'gamma': ['scale', 0.01, 0.001],
+    'kernel': ['rbf']
 }
+svr_grid = GridSearchCV(SVR(), svr_params, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=1)
+svr_grid.fit(X_train, y_train)
+best_svr = svr_grid.best_estimator_
+y_pred_svr = best_svr.predict(X_test)
 
-# Temel SVR modelini oluşturuyoruz.
-svr = SVR()
-
-# GridSearchCV nesnesini oluşturuyoruz.
-# estimator: Modelimiz
-# param_grid: Denediğimiz parametreler
-# cv=5: 5-katlı çapraz doğrulama yap.
-# scoring: Hangi metriğe göre en iyiyi seçeceğini belirtir. Regresyonda genellikle 'neg_mean_squared_error' kullanılır.
-#          Negatif olmasının sebebi, GridSearchCV'nin her zaman skoru "maksimize etmeye" çalışmasıdır. Hatayı minimize etmek, negatif hatayı maksimize etmektir.
-# verbose=2: İşlem sırasında bize bilgi vermesini sağlar.
-# n_jobs=-1: Bilgisayarınızdaki tüm işlemci çekirdeklerini kullanarak süreci hızlandırır.
-grid_search = GridSearchCV(
-    estimator=svr,
-    param_grid=param_grid,
-    cv=5,
-    scoring='neg_mean_squared_error',
-    verbose=2,
-    n_jobs=-1
-)
-
-print("GridSearchCV ile hiperparametre optimizasyonu başlıyor...")
-print(f"Deneniyor: {len(param_grid['C']) * len(param_grid['gamma']) * len(param_grid['kernel'])} farklı kombinasyon.")
+results['SVR'] = {
+    'Best Params': svr_grid.best_params_,
+    'R2 Score': r2_score(y_test, y_pred_svr),
+    'RMSE': np.sqrt(mean_squared_error(y_test, y_pred_svr))
+}
+print("--- SVR Tuning Tamamlandı ---\n")
 
 
-# --- 4. Modeli Eğitme (Bu sefer Grid Search ile) ---
-# Grid Search'ü eğitim verimizle çalıştırıyoruz.
-grid_search.fit(X_train, y_train)
+# --- 3. Model 2: Random Forest Regressor ---
+print("--- Model 2: Random Forest Tuning Başlıyor ---")
+rf_params = {
+    'n_estimators': [100, 200],
+    'max_depth': [10, 20, None],
+    'min_samples_split': [2, 5]
+}
+rf_grid = GridSearchCV(RandomForestRegressor(random_state=42), rf_params, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=1)
+rf_grid.fit(X_train, y_train)
+best_rf = rf_grid.best_estimator_
+y_pred_rf = best_rf.predict(X_test)
 
-print("\nOptimizasyon tamamlandı!")
+results['Random Forest'] = {
+    'Best Params': rf_grid.best_params_,
+    'R2 Score': r2_score(y_test, y_pred_rf),
+    'RMSE': np.sqrt(mean_squared_error(y_test, y_pred_rf))
+}
+print("--- Random Forest Tuning Tamamlandı ---\n")
 
-# --- En İyi Parametreleri ve Modeli Alma ---
 
-# En iyi sonuçları veren parametreler hangileri?
-print(f"\nEn iyi parametreler: {grid_search.best_params_}")
+# --- 4. Model 3: Gradient Boosting Regressor ---
+print("--- Model 3: Gradient Boosting Tuning Başlıyor ---")
+gbr_params = {
+    'n_estimators': [100, 200],
+    'learning_rate': [0.05, 0.1],
+    'max_depth': [3, 4]
+}
+gbr_grid = GridSearchCV(GradientBoostingRegressor(random_state=42), gbr_params, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=1)
+gbr_grid.fit(X_train, y_train)
+best_gbr = gbr_grid.best_estimator_
+y_pred_gbr = best_gbr.predict(X_test)
 
-# En iyi skoru göster
-print(f"En iyi çapraz doğrulama skoru (neg_mean_squared_error): {grid_search.best_score_}")
+results['Gradient Boosting'] = {
+    'Best Params': gbr_grid.best_params_,
+    'R2 Score': r2_score(y_test, y_pred_gbr),
+    'RMSE': np.sqrt(mean_squared_error(y_test, y_pred_gbr))
+}
+print("--- Gradient Boosting Tuning Tamamlandı ---\n")
 
-# En iyi parametrelerle eğitilmiş olan en iyi modeli alıyoruz.
-# Artık bizim ana modelimiz bu olacak.
-best_svr_model = grid_search.best_estimator_
+
+# --- 5. Final Sonuçlarının Karşılaştırılması ---
+print("="*50)
+print("MODEL PERFORMANS KARŞILAŞTIRMASI")
+print("="*50)
+
+for model_name, metrics in results.items():
+    print(f"Model: {model_name}")
+    print(f"  - En İyi Parametreler: {metrics['Best Params']}")
+    print(f"  - R-Kare Skoru: {metrics['R2 Score']:.4f}")
+    print(f"  - Kök Ortalama Kare Hata (RMSE): ${metrics['RMSE']:,.2f}")
+    print("-" * 30)
+
+import pickle
+
+# Kazanan modelimiz Gradient Boosting idi. 
+# GridSearchCV sonucunda bulunan en iyi modeli bir değişkene atayalım.
+champion_model = gbr_grid.best_estimator_
+
+# --- Modeli Pickle ile Kaydetme ---
+# Dosyayı 'wb' (write binary) modunda açıyoruz ve pickle.dump ile nesneyi içine yazıyoruz.
+with open('model.pkl', 'wb') as file:
+    pickle.dump(champion_model, file)
+
+# --- Scaler'ı Pickle ile Kaydetme ---
+# Scaler'ı da aynı şekilde kaydediyoruz. Bu çok önemli!
+with open('scaler.pkl', 'wb') as file:
+    pickle.dump(scaler, file)
+
+print("\n" + "="*50)
+print("Şampiyon model 'model.pkl' olarak kaydedildi.")
+print("Veri ölçekleyici 'scaler.pkl' olarak kaydedildi.")
+print("Artık web uygulaması için hazırız!")
+print("="*50)
+
 
